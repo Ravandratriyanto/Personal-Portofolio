@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;500&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a0a08;
+    --ink: #eae6da;
+    --accent: #c9974f;   /* brass/amber, dossier feel */
+    --dim: #6b6f66;
+    --logo-size: 320px;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin: 0;
+    height: 100%;
+    background: var(--bg);
+  }
+
+  /* ============ INTRO OVERLAY ============ */
+
+  #intro{
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    color: var(--ink);
+    overflow: hidden;
+    cursor: pointer;
+    transition: opacity 0.6s ease;
+  }
+
+  #intro.fade-out{
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* faint scanline texture, ambient only */
+  #intro::after{
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.035) 0px,
+      rgba(255,255,255,0.035) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    mix-blend-mode: overlay;
+    opacity: 0.5;
+  }
+
+  .stage{
+    position: relative;
+    width: var(--logo-size);
+    height: var(--logo-size);
+    opacity: 0;
+    transform: scale(0.85);
+    animation: logoIn 0.9s cubic-bezier(.2,.8,.2,1) forwards;
+  }
+
+  @keyframes logoIn{
+    to{ opacity: 1; transform: scale(1); }
+  }
+
+  /* ---- Blender model renders live here via Three.js ---- */
+  .logo-3d{
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .logo-3d canvas{
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* brief lock-on flash */
+  .flash{
+    position: absolute;
+    inset: -18px;
+    border-radius: 50%;
+    background: var(--ink);
+    opacity: 0;
+  }
+  .flash.hit{
+    animation: flashPulse 0.25s ease-out;
+  }
+  @keyframes flashPulse{
+    0%{ opacity: 0.35; }
+    100%{ opacity: 0; }
+  }
+
+  /* ============ DESIGNATION / NAME ============ */
+
+  .designation{
+    margin-top: 34px;
+    text-align: center;
+  }
+
+  .label{
+    display: block;
+    font-family: 'Oswald', sans-serif;
+    font-weight: 300;
+    font-size: 0.7rem;
+    letter-spacing: 0.4em;
+    color: var(--accent);
+    opacity: 0;
+    text-transform: uppercase;
+    animation: fadeUp 0.5s ease forwards;
+    animation-delay: 1.5s;
+  }
+
+  @keyframes fadeUp{
+    from{ opacity: 0; transform: translateY(6px); }
+    to{ opacity: 1; transform: translateY(0); }
+  }
+
+  .name{
+    margin: 8px 0 0;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: clamp(1.6rem, 5vw, 2.6rem);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+
+  .cursor{
+    color: var(--accent);
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink{
+    50%{ opacity: 0; }
+  }
+
+  .skip-hint{
+    position: absolute;
+    bottom: 40px;
+    font-family: 'Oswald', sans-serif;
+    font-weight: 300;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    color: var(--dim);
+    text-transform: uppercase;
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards;
+    animation-delay: 3.4s;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .stage, .label, .skip-hint{ animation: none; opacity: 1; transform: none; }
+  }
+
+  /* ============ PLACEHOLDER SITE CONTENT ============ */
+  /* delete this block and replace with your actual page */
+  #site-content{
+    min-height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dim);
+    font-family: 'Oswald', sans-serif;
+    letter-spacing: 0.1em;
+  }
+</style>
+</head>
+<body>
+
+<div id="intro">
+  <div class="stage">
+    <div class="logo-3d" id="logo3d"></div>
+    <div class="flash"></div>
+  </div>
+
+  <div class="designation">
+    <span class="label">Designation</span>
+    <h1 class="name"><span id="typed"></span><span class="cursor">▌</span></h1>
+  </div>
+
+  <p class="skip-hint">Press any key to continue</p>
+</div>
+
+<!-- replace this with your real website content -->
+<div id="site-content">Your site content goes here</div>
+
+<script>
+(() => {
+  const NAME = "RAVANDRA ANANDITO TRIYANTO";   // <-- change this to whatever name/title you want
+  const TYPE_START_DELAY = 1900;               // ms before typing begins (after logo settles + lock-on)
+  const TYPE_SPEED = 90;                       // ms per character
+  const REDIRECT_DELAY = 10000;                // ms — always advance to the next page at this mark
+  const REDIRECT_URL = "main.html";            // <-- where the intro sends you
+
+  const intro = document.getElementById('intro');
+  const typedEl = document.getElementById('typed');
+  const flash = intro.querySelector('.flash');
+
+  let dismissed = false;
+  function dismiss(){
+    if (dismissed) return;
+    dismissed = true;
+    intro.classList.add('fade-out');
+    setTimeout(() => { window.location.href = REDIRECT_URL; }, 650);
+  }
+
+  function typeName(){
+    let i = 0;
+    const interval = setInterval(() => {
+      typedEl.textContent += NAME[i];
+      i++;
+      if (i >= NAME.length){
+        clearInterval(interval);
+      }
+    }, TYPE_SPEED);
+  }
+
+  // typewriter reveal always animates — it's a content reveal, not motion.
+  // (the logo's spin still respects reduced-motion on its own, in the Three.js script below)
+  setTimeout(() => { flash.classList.add('hit'); }, 900);
+  setTimeout(typeName, TYPE_START_DELAY);
+
+  // hard cutoff — moves on to main.html at the 10s mark no matter what
+  setTimeout(dismiss, REDIRECT_DELAY);
+
+  // click or any key still skips early, straight to main.html
+  intro.addEventListener('click', dismiss);
+  document.addEventListener('keydown', dismiss);
+})();
+</script>
+
+<!-- ============ LIVE 3D LOGO (Three.js) ============ -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+  import * as THREE from 'three';
+  import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+  import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+  const FBX_PATH = 'UNEP.fbx';   // <-- your exported file, same folder as this HTML
+  const ROT_SPEED = 0.6;             // radians per second
+
+  const container = document.getElementById('logo3d');
+
+  const scene = new THREE.Scene();
+
+  const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+  camera.position.set(0, 0, 6);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.15;
+  container.appendChild(renderer.domElement);
+
+  // glass needs a solid backdrop to refract — fully transparent canvas + no
+  // background gives it nothing to bend, which just looks invisible.
+  // matching the page's own bg color keeps it visually seamless.
+  scene.background = new THREE.Color(0x0a0a08);
+
+  // glass also needs something to reflect — a plain color alone still looks flat,
+  // so generate a soft studio-style environment for it to catch light from
+  const pmremGenerator = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+
+  // lighting: soft ambient + a key light so the model actually reads in 3D
+  scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+  const key = new THREE.DirectionalLight(0xffffff, 1.4);
+  key.position.set(2, 3, 4);
+  scene.add(key);
+  const rim = new THREE.DirectionalLight(0xc9974f, 0.8);
+  rim.position.set(-3, -1, -2);
+  scene.add(rim);
+
+  // pivot group = the same trick as the Empty in Blender:
+  // the model keeps its own tilt, the pivot does the spinning
+  const pivot = new THREE.Group();
+  scene.add(pivot);
+
+  function resize(){
+    const { clientWidth: w, clientHeight: h } = container;
+    if (!w || !h) return;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  const loader = new FBXLoader();
+  loader.load(
+    FBX_PATH,
+    (object) => {
+      let meshCount = 0;
+      const meshesOnly = [];
+      object.traverse((child) => {
+        console.log(`[logo3d] found node: "${child.name}" type=${child.type} visible=${child.visible}`);
+        child.visible = true; // override any hidden flag carried over from Blender/FBX
+        if (child.isMesh){
+          meshCount++;
+          meshesOnly.push(child);
+          // your Blender glass shader (transmission/IOR) doesn't survive FBX export at
+          // all — FBX has no field for it. Rebuilding the look natively here instead.
+          child.material = new THREE.MeshPhysicalMaterial({
+            color: 0xf4f0e6,        // faint bone tint, adjust to taste
+            transmission: 0,        // TEMP: 0 = fully opaque, to confirm the shape itself renders
+            roughness: 0.4,
+            thickness: 0.6,
+            ior: 1.5,
+            envMapIntensity: 1.2,
+            clearcoat: 0.4,
+            clearcoatRoughness: 0.15,
+            side: THREE.DoubleSide  // safety net against flipped normals
+          });
+        }
+      });
+
+      if (meshCount === 0){
+        console.warn(
+          '[logo3d] FBX loaded but contains 0 meshes. ' +
+          'This usually means only an Empty/Camera/Light got exported — ' +
+          'in Blender, select LogoMesh itself before exporting FBX.'
+        );
+        return;
+      }
+      console.log(`[logo3d] FBX loaded OK — ${meshCount} mesh(es) found.`);
+
+      // measure ONLY the mesh geometry — a Camera or Light also present in the
+      // file (if the whole scene got exported, not just the logo) can sit far
+      // from the origin and badly skew a whole-object bounding box
+      const box = new THREE.Box3();
+      meshesOnly.forEach((m) => box.expandByObject(m));
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      console.log(`[logo3d] mesh-only bounding box size: x=${size.x.toFixed(3)} y=${size.y.toFixed(3)} z=${size.z.toFixed(3)}`);
+
+      // normalize scale so it fills the view regardless of Blender's units
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const scale = (isFinite(maxDim) && maxDim > 0) ? 3.4 / maxDim : 1;
+      // wrap in a fresh container instead of touching the model's own
+      // scale/position — overwriting those directly was clobbering whatever
+      // scale the Group already had from Blender, collapsing it to near-zero
+      const wrapper = new THREE.Group();
+      wrapper.scale.setScalar(scale);
+      wrapper.position.set(-center.x * scale, -center.y * scale, -center.z * scale);
+      wrapper.add(object);
+
+      pivot.add(wrapper);
+    },
+    undefined,
+    (err) => {
+      console.error('[logo3d] FBX failed to load:', err);
+    }
+  );
+
+  const clock = new THREE.Clock();
+  function animate(){
+    requestAnimationFrame(animate);
+    pivot.rotation.y += ROT_SPEED * clock.getDelta();
+    renderer.render(scene, camera);
+  }
+  animate();
+</script>
+
+</body>
+</html>

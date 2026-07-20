@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Intro</title>
-<link rel="preload" href="./UNEP.fbx" as="fetch" crossorigin="anonymous">
+<link rel="preload" href="./UNEP.glb" as="fetch" crossorigin="anonymous">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;500&family=Share+Tech+Mono&display=swap" rel="stylesheet">
@@ -256,10 +256,10 @@
 </script>
 <script type="module">
   import * as THREE from 'three';
-  import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+  import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
-  const FBX_PATH = './UNEP.fbx';   // <-- your exported file, same folder as this HTML
+  const GLB_PATH = './UNEP.glb';   // <-- your exported file, same folder as this HTML
   const ROT_SPEED = 0.6;             // radians per second
 
   const container = document.getElementById('logo3d');
@@ -309,10 +309,11 @@
   window.addEventListener('resize', resize);
   resize();
 
-  const loader = new FBXLoader();
+  const loader = new GLTFLoader();
   loader.load(
-    FBX_PATH,
-    (object) => {
+    GLB_PATH,
+    (gltf) => {
+      const object = gltf.scene;
       let meshCount = 0;
       const meshesOnly = [];
       object.traverse((child) => {
@@ -339,13 +340,13 @@
 
       if (meshCount === 0){
         console.warn(
-          '[logo3d] FBX loaded but contains 0 meshes. ' +
+          '[logo3d] GLB loaded but contains 0 meshes. ' +
           'This usually means only an Empty/Camera/Light got exported — ' +
-          'in Blender, select LogoMesh itself before exporting FBX.'
+          'in Blender, select LogoMesh itself before exporting GLB.'
         );
         return;
       }
-      console.log(`[logo3d] FBX loaded OK — ${meshCount} mesh(es) found.`);
+      console.log(`[logo3d] GLB loaded OK — ${meshCount} mesh(es) found.`);
 
       // measure ONLY the mesh geometry — a Camera or Light also present in the
       // file (if the whole scene got exported, not just the logo) can sit far
@@ -371,7 +372,7 @@
     },
     undefined,
     (err) => {
-      console.error('[logo3d] FBX failed to load:', err);
+      console.error('[logo3d] GLB failed to load:', err);
     }
   );
 

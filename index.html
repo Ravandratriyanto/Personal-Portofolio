@@ -232,26 +232,11 @@
 
   <script>
     (() => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const uid = urlParams.get('uid');
-      
-      // Generate 100 exclusive valid UIDs: VIP-001 to VIP-100
-      const validUIDs = Array.from({length: 100}, (_, i) => `VIP-${String(i + 1).padStart(3, '0')}`);
-      
-      if (!uid || !validUIDs.includes(uid)) {
-        const intro = document.getElementById('intro');
-        intro.innerHTML = '<div style="color:#A7C7B2; font-family:\'Share Tech Mono\', monospace; text-align:center; font-size: 1.5rem; letter-spacing: 2px;">ACCESS DENIED<br><span style="font-size: 1rem; color: #6b6f66; margin-top: 10px; display: block;">Invalid or missing UID. Please use a valid access link.</span></div>';
-        intro.style.cursor = 'default';
-        return; 
-      }
-      
-      sessionStorage.setItem('portfolio_uid', uid);
-
-      const NAME = "RAVANDRA ANANDITO TRIYANTO";   // <-- change this to whatever name/title you want
-      const TYPE_START_DELAY = 1900;               // ms before typing begins (after logo settles + lock-on)
-      const TYPE_SPEED = 90;                       // ms per character
-      const REDIRECT_DELAY = 10000;                // ms — always advance to the next page at this mark
-      const REDIRECT_URL = "main.html";            // <-- where the intro sends you
+      const NAME = "RAVANDRA ANANDITO TRIYANTO";
+      const TYPE_START_DELAY = 1900;
+      const TYPE_SPEED = 90;
+      const REDIRECT_DELAY = 10000;
+      const REDIRECT_URL = "main.html";
 
       const intro = document.getElementById('intro');
       const typedEl = document.getElementById('typed');
@@ -308,7 +293,6 @@
     const ROT_SPEED = 0.6;             // radians per second
 
     const container = document.getElementById('logo3d');
-    if (!container) return;
 
     const scene = new THREE.Scene();
 

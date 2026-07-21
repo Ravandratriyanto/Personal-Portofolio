@@ -2,11 +2,6 @@
 <html lang="en">
 
 <head>
-  <script>
-    if (!sessionStorage.getItem('portfolio_uid')) {
-      window.location.replace('index.html');
-    }
-  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ravandra Anandito Triyanto — Portfolio</title>
@@ -75,9 +70,6 @@
       letter-spacing: 0.08em;
       font-size: 0.95rem;
       color: var(--ink);
-      display: flex;
-      align-items: center;
-      gap: 12px;
     }
 
     .brand span {
@@ -388,10 +380,7 @@
 
   <nav>
     <div class="wrap">
-      <div class="brand">
-        JD<span>.</span>
-        <span id="uid-badge" style="font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; color: var(--accent); border: 1px solid rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 4px; display: none;"></span>
-      </div>
+      <div class="brand">JD<span>.</span></div>
       <ul class="nav-links">
         <li><a href="#skills">Skills</a></li>
         <li><a href="#experience">Experience</a></li>
@@ -486,14 +475,6 @@
     &copy; 2026 Ravandra Anandito Triyanto
   </footer>
 
-  <script>
-    const uid = sessionStorage.getItem('portfolio_uid');
-    if (uid) {
-      const badge = document.getElementById('uid-badge');
-      badge.textContent = `UID: ${uid}`;
-      badge.style.display = 'inline-block';
-    }
-  </script>
 </body>
 
 </html>
